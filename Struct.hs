@@ -22,24 +22,26 @@ buildParser x = do
   trace (show info) (return ())
   let parseable = 
           case info of
-                 TyConI (DataD _ _ _ (NormalC s [(con1,ty)]:rest) _ ) -> do
-                   l  <- trace (show (ty,parsers,con1,lookup (show ty) parsers, rest)) $ newName "foo"
+                 TyConI (DataD _ _ _ types _ ) -> do
+--                   l  <- trace (show (ty,parsers,"con1",s,lookup (show ty) parsers, rest)) $ newName "foo"
                    -- (canonicalise s,
                    -- \s -> SCon <$> parseInt s )]
-                   listE [tupE [ stringE $ canonicalise s,
-                          lamE [varP l] ((varE '(<$>))    `appE`
-                                         (conE 'SCon) `appE`
+                   listE $ map (\(NormalC s [(_,ty)]) -> do
+                     l <- newName "foo"
+                     tupE [ stringE $ canonicalise s,
+                            lamE [varP l] ((varE '(<$>))    `appE`
+                                           (conE s) `appE`
 
                                          --(varE 'parseInt `appE` varE l))
-                                         (varE (fromJust $ lookup (show ty) parsers) `appE` varE l))
-                        ]]
+                                           (varE (fromJust $ lookup ty parsers) `appE` varE l))
+                        ]) types
                  _ -> error "don't tase me, bro"
   appE [| flip other |] parseable
     where 
       -- other :: [(String, Struct)] -> Maybe Simple
       canonicalise  = map toLower . reverse.takeWhile (/= '.') . reverse . show
-      parsers = [("ConT GHC.Types.Int", 'parseInt)
-                ,("ConT GHC.Types.Float", 'parseFloat)
+      parsers = [(ConT ''Int, 'parseInt)
+                ,(ConT ''Float, 'parseFloat)
                 ]
 
 -- getCons :: Q [Con]
