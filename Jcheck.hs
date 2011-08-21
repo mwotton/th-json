@@ -27,6 +27,9 @@ import Struct
 -- Therefore it can't be in the same module as the one you're running the splice (at compile-time) in.
 --
 
-structConsString = $(stringE . show =<< getCons )
+structConsString = $(stringE . show =<< (getCons ''Struct) )
 
 structConsToPats = $(stringE . show =<< consToPats)
+
+parseSimple = $(buildParser ''Simple)
+
